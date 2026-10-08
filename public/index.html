@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zahir CoreBridge</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<style>
+:root{
+  --bg:#f3f6fa; --panel:#fff; --line:#e1e7ef; --line-soft:#eef2f7;
+  --ink:#16202e; --ink-2:#52627a; --ink-3:#8896ab;
+  --brand:#0b5cad; --brand-d:#084a8d; --brand-l:#e6f0fb;
+  --ok:#17794a; --ok-l:#e3f5ec; --warn:#8a5a00; --warn-l:#fff4d6; --warn-line:#f0d98a;
+  --bad:#b42318; --bad-l:#fde8e7;
+  --r:10px;
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  font-size:13px; color:var(--ink);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{height:100%;margin:0;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+.app{display:grid;grid-template-rows:52px 1fr 28px;height:100%}
+header{display:flex;align-items:center;gap:12px;padding:0 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:800;font-size:17px}
+.brand{font-weight:700;font-size:16px;color:var(--brand)}
+.brand small{display:block;font-weight:500;font-size:10.5px;color:var(--ink-3);margin-top:-2px}
+.spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;background:var(--ok-l);color:var(--ok);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chip::before{content:"";flex:0 0 7px;width:7px;height:7px;border-radius:50%;background:currentColor}
+.chip.idle{background:var(--line-soft);color:var(--ink-2)} .chip.busy{background:var(--brand-l);color:var(--brand)}
+.chip.bad{background:var(--bad-l);color:var(--bad)} .chip.warn{background:var(--warn-l);color:var(--warn)}
+
+main{display:grid;grid-template-columns:372px 1fr;min-height:0}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow:auto;padding:6px 18px 18px}
+section.step{padding:16px 0;border-bottom:1px solid var(--line-soft)}
+section.step:last-child{border-bottom:0}
+.step-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.num{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--brand-l);color:var(--brand);flex:0 0 22px}
+.num.done{background:var(--ok);color:#fff}
+.step-h h2{margin:0;font-size:14px}
+.step-h span.hint{margin-left:auto;font-size:11.5px;color:var(--ink-3);text-align:right}
+
+.field{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:8px;margin-bottom:9px}
+.field>label{color:var(--ink-2);font-size:12.5px}
+.in{width:100%;height:32px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:#fff}
+.in:hover{border-color:#c5d0df}
+.in:focus{border-color:var(--brand);outline:0;box-shadow:0 0 0 3px var(--brand-l)}
+.in:disabled{background:var(--bg);color:var(--ink-3)}
+input[type=date].in{padding:0 4px 0 8px;font-size:12.5px}
+input[type=date]::-webkit-calendar-picker-indicator{margin-left:2px;padding:0}
+.row{display:flex;gap:6px;align-items:center}
+.row>*{flex:1;min-width:0}
+.row .sep{flex:0 0 auto;color:var(--ink-3)}
+.row .fixed{flex:0 0 auto}
+.links{display:flex;gap:12px;margin:-2px 0 10px 100px}
+.link{background:none;border:0;padding:0;color:var(--brand);font-size:12px;cursor:pointer;text-align:left}
+.link:hover{text-decoration:underline}
+
+.account{background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:var(--ink-2);line-height:1.5;word-break:break-all}
+.account b{display:block;color:var(--ink);font-weight:600}
+.btn{height:32px;padding:0 14px;border-radius:7px;border:1px solid var(--line);background:#fff;cursor:pointer;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.btn:hover:not(:disabled){background:var(--bg)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--brand-d)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.lic{display:flex;align-items:center;gap:6px;min-width:0}
+#kodeA,#kodeB{padding:0 7px;font-variant-numeric:tabular-nums}
+.lic .chip{font-size:11.5px;flex:1 1 auto;min-width:0}
+.lic .btn{flex:0 0 auto}
+
+.work{display:flex;flex-direction:column;min-width:0;min-height:0;padding:16px 20px;gap:12px}
+.bar{display:flex;gap:8px;align-items:center}
+.bar .grp{display:flex;gap:0}
+.bar .grp .btn:first-child{border-radius:7px 0 0 7px}
+.bar .grp .btn:last-child{border-radius:0 7px 7px 0;margin-left:-1px}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:11px 16px;min-width:0}
+.stat small{color:var(--ink-3);font-size:11.5px}
+.stat strong{display:block;font-size:20px;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat.money strong{color:var(--brand)}
+
+.notes{display:flex;flex-direction:column;gap:6px}
+.note{display:flex;gap:10px;align-items:center;background:var(--warn-l);border:1px solid var(--warn-line);color:var(--warn);border-radius:8px;padding:7px 12px;font-size:12.5px}
+.note b{background:#fff;border-radius:99px;min-width:22px;padding:0 7px;text-align:center;font-variant-numeric:tabular-nums}
+
+.card{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.tabs{display:flex;align-items:center;gap:2px;padding:0 10px;border-bottom:1px solid var(--line)}
+.tab{padding:11px 12px;background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-2);font-weight:600;cursor:pointer}
+.tab .n{margin-left:6px;background:var(--bg);border-radius:99px;padding:1px 7px;font-size:11.5px}
+.tab .n:empty{display:none}
+.tab[aria-selected=true]{color:var(--brand);border-bottom-color:var(--brand)}
+.tab[aria-selected=true] .n{background:var(--brand-l)}
+.tabs .search{margin-left:auto;width:220px;height:28px}
+
+.scroll{flex:1;overflow:auto;position:relative}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:1100px}
+th,td{padding:8px 12px;white-space:nowrap;border-bottom:1px solid var(--line-soft);text-align:left}
+th{position:sticky;top:0;z-index:2;background:#f7f9fc;color:var(--ink-2);font-size:12px;font-weight:600;border-bottom:1px solid var(--line)}
+.r{text-align:right;font-variant-numeric:tabular-nums}
+.c{text-align:center}
+tbody tr:hover td{background:#f5f9ff}
+td.muted,.muted{color:var(--ink-3)}
+td.wide{max-width:280px;overflow:hidden;text-overflow:ellipsis}
+.badge{display:inline-block;min-width:22px;text-align:center;padding:1px 6px;border-radius:5px;font-weight:700;font-size:11.5px}
+.badge.A{background:var(--brand-l);color:var(--brand)}
+.badge.B{background:#efe9fb;color:#5b3fa6}
+.code{font-variant-numeric:tabular-nums;background:var(--warn-l);color:var(--warn);border-radius:5px;padding:1px 7px;font-size:12px}
+.idx{font-weight:700;color:var(--ink-2)}
+tfoot td{position:sticky;bottom:0;background:#f7f9fc;font-weight:700;border-top:1px solid var(--line);border-bottom:0}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--ink-3);line-height:1.7}
+
+footer{display:flex;align-items:center;gap:10px;padding:0 20px;background:var(--panel);border-top:1px solid var(--line);color:var(--ink-3);font-size:12px}
+footer.ok{color:var(--ok)} footer.bad{color:var(--bad)}
+.spin{width:12px;height:12px;border:2px solid var(--brand-l);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite;display:none}
+footer.busy .spin{display:block}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+dialog{border:1px solid var(--line);border-radius:12px;padding:0;width:min(520px,94vw);box-shadow:0 18px 50px rgba(22,32,46,.18);color:var(--ink)}
+dialog::backdrop{background:rgba(22,32,46,.35)}
+dialog h3{margin:0;padding:14px 18px;font-size:15px;border-bottom:1px solid var(--line)}
+.dlg{padding:16px 18px 18px;display:grid;gap:12px}
+.dlg .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.dlg .actions .left{margin-right:auto;display:flex;gap:8px}
+.list{border:1px solid var(--line);border-radius:8px;height:320px;overflow:auto;padding:4px 0}
+.list label{display:flex;gap:10px;align-items:center;padding:6px 12px;cursor:pointer}
+.list label:hover{background:#f5f9ff}
+.list input{width:15px;height:15px;accent-color:var(--brand)}
+textarea{font-family:Consolas,monospace;font-size:12.5px;border:1px solid var(--line);border-radius:7px;padding:8px;min-height:100px;resize:vertical}
+.hintx{color:var(--ink-3);font-size:12px}
+.msg{font-size:12px;min-height:16px}.msg.bad{color:var(--bad)}.msg.ok{color:var(--ok)}
+.diag p{margin:4px 0;font-family:Consolas,monospace;font-size:12.5px}.diag .y{color:var(--ok)}.diag .x{color:var(--bad)}
+
+@media (max-width:900px){
+  .app{height:auto;min-height:100%;grid-template-rows:52px auto 28px}
+  main{grid-template-columns:1fr} aside{border-right:0;border-bottom:1px solid var(--line);overflow:visible}
+  .stats{grid-template-columns:1fr 1fr} .stat strong{font-size:16px} .scroll{height:60vh;flex:none}
+  .tabs{flex-wrap:wrap;padding-bottom:8px} .tab{white-space:nowrap} .tabs .search{width:100%;margin-left:0}
+  footer{position:sticky;bottom:0}
+}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Z</div>
+    <div class="brand">Zahir CoreBridge<small>Laporan pajak dari Zahir Online</small></div>
+    <div class="spacer"></div>
+    <span class="chip idle" id="conn">Belum login</span>
+  </header>
+
+  <main>
+    <aside>
+      <!-- 1 -->
+      <section class="step">
+        <div class="step-h"><span class="num" id="n1">1</span><h2>Akun &amp; database</h2></div>
+        <form id="loginBox" autocomplete="on">
+          <div class="field"><label for="server">Server</label>
+            <input class="in" id="server" list="servers" placeholder="go.zahironline.com" autocomplete="url"><datalist id="servers"></datalist></div>
+          <div class="field"><label for="email">Email</label><input class="in" id="email" type="email" autocomplete="username"></div>
+          <div class="field"><label for="password">Password</label><input class="in" id="password" type="password" autocomplete="current-password"></div>
+          <button class="btn primary block" id="btnLogin" type="submit">Login</button>
+        </form>
+        <div id="accountBox" hidden>
+          <div class="account" id="account"></div>
+          <div class="field"><label for="db">Database</label><select class="in" id="db"></select></div>
+          <div class="field"><label>Registrasi</label>
+            <div class="lic"><span class="chip idle" id="lic">Belum ada database</span><button class="btn sm" id="btnReg" type="button">Registrasi…</button></div></div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn sm" id="btnDiag" type="button" disabled>Tes akses database</button>
+            <button class="btn sm" id="btnLogout" type="button">Logout</button>
+          </div>
+        </div>
+      </section>
+      <!-- 2 -->
+      <section class="step">
+        <div class="step-h"><span class="num" id="n2">2</span><h2>Periode &amp; filter</h2></div>
+        <div class="field"><label for="npwp">NPWP penjual</label>
+          <input class="in" id="npwp" inputmode="numeric" maxlength="20" placeholder="16 digit"></div>
+        <div class="field"><label>Periode</label>
+          <div class="row"><input class="in" type="date" id="d1" aria-label="Dari"><span class="sep">–</span><input class="in" type="date" id="d2" aria-label="Sampai"></div></div>
+        <div class="links"><button class="link" type="button" data-month="0">Bulan ini</button><button class="link" type="button" data-month="-1">Bulan lalu</button></div>
+        <div class="field"><label for="cust">Customer</label>
+          <div class="row"><input class="in" id="cust" value="(Semua customer)" readonly><button class="btn sm fixed" id="btnCust" type="button">Pilih…</button></div></div>
+      </section>
+      <!-- 3 -->
+      <section class="step">
+        <div class="step-h"><span class="num" id="n3">3</span><h2>Isian faktur</h2><span class="hint" id="h3"></span></div>
+        <div class="field"><label for="trx">Kode transaksi</label><select class="in" id="trx"></select></div>
+        <div class="field"><label for="ket">Ket. tambahan</label><select class="in" id="ket"></select></div>
+        <div class="field"><label for="cap">Cap fasilitas</label><select class="in" id="cap"></select></div>
+        <div class="field"><label>Kode default</label>
+          <div class="row"><input class="in" id="kodeA" maxlength="6" inputmode="numeric" aria-label="Kode default barang" title="Kode barang"><span class="sep muted">barang</span><input class="in" id="kodeB" maxlength="6" inputmode="numeric" aria-label="Kode default jasa" title="Kode jasa"><span class="sep muted">jasa</span></div></div>
+        <div class="links"><button class="link" type="button" id="btnRef">Perbarui daftar dari template DJP…</button>
+          <input type="file" id="refFile" accept=".xlsx,.xlsm" hidden></div>
+      </section>
+    </aside>
+
+    <div class="work">
+      <div class="bar">
+        <button class="btn primary" id="btnPreview" disabled>▶ Preview</button>
+        <div class="grp"><button class="btn" id="btnXlsx" disabled>Export Excel</button><button class="btn" id="btnXml" disabled>Export XML</button></div>
+      </div>
+
+      <div class="stats" aria-live="polite">
+        <div class="stat"><small>Faktur</small><strong id="sF">0</strong></div>
+        <div class="stat"><small>Baris detail</small><strong id="sD">0</strong></div>
+        <div class="stat money"><small>Total DPP</small><strong id="sDpp">Rp 0</strong></div>
+        <div class="stat money"><small>Total PPN</small><strong id="sPpn">Rp 0</strong></div>
+      </div>
+
+      <div class="notes" id="notes" hidden></div>
+
+      <div class="card">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" aria-selected="true" data-t="f">Faktur<span class="n" id="nF"></span></button>
+          <button class="tab" role="tab" aria-selected="false" data-t="d">Detail faktur<span class="n" id="nD"></span></button>
+          <input class="in search" id="q" placeholder="Cari pembeli / referensi" aria-label="Cari">
+        </div>
+        <div class="scroll"><table id="tbl"></table><div class="empty" id="empty"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <footer id="foot"><span class="spin"></span><span id="footText">Login dan pilih database untuk mulai</span></footer>
+</div>
+
+<dialog id="dlgReg"><h3>Registrasi database</h3><div class="dlg">
+  <div class="hintx">1. Kirim slug database ini ke admin</div>
+  <div class="row"><input class="in" id="regSlug" readonly><button class="btn sm fixed" id="regCopy" type="button">Salin</button></div>
+  <div class="hintx">2. Tempel kode registrasi dari admin</div>
+  <textarea id="regCode" spellcheck="false"></textarea>
+  <div class="msg" id="regMsg"></div>
+  <div class="actions"><button class="btn" type="button" onclick="dlgReg.close()">Batal</button><button class="btn primary" id="regSave" type="button">Simpan &amp; aktifkan</button></div>
+</div></dialog>
+
+<dialog id="dlgCust"><h3>Pilih customer</h3><div class="dlg">
+  <input class="in" id="custQ" placeholder="Cari nama customer" aria-label="Cari customer">
+  <div class="list" id="custList"></div>
+  <div class="hintx" id="custInfo"></div>
+  <div class="actions"><span class="left"><button class="btn sm" id="custAll" type="button">Pilih semua yang tampil</button><button class="btn sm" id="custNone" type="button">Kosongkan</button></span>
+    <button class="btn" type="button" onclick="dlgCust.close()">Batal</button><button class="btn primary" id="custApply" type="button">Terapkan</button></div>
+</div></dialog>
+
+<dialog id="dlgDiag"><h3>Tes akses database</h3><div class="dlg"><div class="diag" id="diagOut"></div>
+  <div class="actions"><button class="btn primary" type="button" onclick="dlgDiag.close()">Tutup</button></div></div></dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+const ALL = "(Semua customer)", NONE = "Tidak ada";
+const S = { cfg:null, token:"", server:"", email:"", dbs:[], slug:"", lic:{ok:false}, customers:[], sel:new Set(), tab:"f", q:"", data:null, busy:0 };
+const store = { get(k,d){ try{ const v=localStorage.getItem("zc_"+k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
+                set(k,v){ try{ localStorage.setItem("zc_"+k, JSON.stringify(v)); }catch(e){} } };
+const nf = new Intl.NumberFormat("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
+const ni = new Intl.NumberFormat("id-ID");
+const money = v => nf.format(v||0), dash = v => v ? money(v) : '<span class="muted">–</span>';
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num = v => typeof v==="number" ? v : (parseFloat(v)||0);
+
+function status(t, kind=""){ const f=$("foot"); f.classList.remove("ok","bad"); if(kind) f.classList.add(kind); $("footText").textContent=t; }
+function busy(on){ S.busy+=on?1:-1; $("foot").classList.toggle("busy", S.busy>0); }
+function chip(el, text, kind){ el.className="chip"+(kind==="ok"?"":" "+kind); el.textContent=text; el.title=text; }
+
+async function api(path, body, raw=false){
+  busy(true);
+  try{
+    const form = body instanceof FormData;
+    const r = await fetch(path, {method: body ? "POST":"GET",
+      headers: form ? {Authorization:"Bearer "+S.token} : {"Content-Type":"application/json", Authorization:"Bearer "+S.token},
+      body: form ? body : body ? JSON.stringify(body) : undefined});
+    if(!r.ok){ let m="HTTP "+r.status; try{ m=(await r.json()).error||m; }catch(e){} if(r.status===401 && S.token) logout(true); throw new Error(m); }
+    return raw ? r : r.json();
+  } finally { busy(false); }
+}
+
+/* ---------- referensi ---------- */
+function refs(){ const own=store.get("refs",{}); return {
+  trx: own.trx || S.cfg.kode_trx,
+  ket: {"07": own.ket07 || S.cfg.ket["07"], "08": own.ket08 || S.cfg.ket["08"]},
+  cap: {"07": own.cap07 || S.cfg.cap["07"], "08": own.cap08 || S.cfg.cap["08"]} }; }
+function fillSelect(sel, items, current, withNone){
+  sel.innerHTML=""; if(withNone) sel.add(new Option(NONE,""));
+  for(const [c,d] of items){ const o=new Option(`${c} - ${d}`, c); o.title=o.text; sel.add(o); }
+  sel.value = items.some(([c])=>c===current) ? current : (withNone ? "" : items[0][0]);
+}
+function trxChanged(){
+  const r=refs(), k=$("trx").value, on=S.cfg.fasilitas.includes(k);
+  fillSelect($("ket"), on?r.ket[k]:[], store.get("ket",""), true);
+  fillSelect($("cap"), on?r.cap[k]:[], store.get("cap",""), true);
+  $("ket").disabled=$("cap").disabled=!on; save(); steps();
+}
+
+/* ---------- langkah ---------- */
+function steps(){
+  const npwp=$("npwp").value.replace(/\D/g,""), k=$("trx").value, on=S.cfg&&S.cfg.fasilitas.includes(k);
+  const done=[!!(S.token && S.slug && S.lic.ok), npwp.length===16 && !!$("d1").value && !!$("d2").value, !!k && (!on || (!!$("ket").value && !!$("cap").value))];
+  ["n1","n2","n3"].forEach((id,i)=>{ $(id).classList.toggle("done",done[i]); $(id).textContent=done[i]?"✓":i+1; });
+  $("h3").textContent = done[2] ? `Kode transaksi ${k}` : on ? "Pilih ket. tambahan & cap" : "";
+  const ready=done[0];
+  ["btnPreview","btnXlsx","btnXml"].forEach(b=>$(b).disabled=!ready);
+  $("btnDiag").disabled=!(S.token && S.slug);
+  $("loginBox").hidden=!!S.token; $("accountBox").hidden=!S.token;
+  $("account").innerHTML = S.token ? `<b>${esc(S.email)}</b>di ${esc(S.server)}${S.slug?"<br>"+esc(S.slug):""}` : "";
+}
+
+/* ---------- pengaturan ---------- */
+function save(){
+  store.set("npwp",$("npwp").value.trim()); store.set("kode_a",$("kodeA").value.trim()); store.set("kode_b",$("kodeB").value.trim());
+  store.set("kode_trx",$("trx").value);
+  if(!$("ket").disabled){ store.set("ket",$("ket").value); store.set("cap",$("cap").value); }
+}
+function setMonth(off){
+  const t=new Date(), y=t.getFullYear(), m=t.getMonth()+Number(off);
+  const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  $("d1").value=iso(new Date(y,m,1)); $("d2").value=iso(new Date(y,m+1,0)); steps();
+}
+
+/* ---------- login & database ---------- */
+async function doLogin(e){
+  e.preventDefault();
+  const server=$("server").value.trim()||S.cfg.default_server, email=$("email").value.trim(), password=$("password").value;
+  if(!email||!password){ status("Email dan password wajib diisi.","bad"); return; }
+  chip($("conn"),"Login…","busy"); status(`Login ke ${server}…`);
+  try{
+    const r=await api("/api/login",{server,email,password});
+    $("password").value=""; S.token=r.token; S.server=r.server; S.email=email;
+    store.set("email",email); const sv=store.get("servers",[]); if(!sv.includes(r.server)){ sv.push(r.server); store.set("servers",sv); } store.set("server",r.server);
+    setDbs(r.databases); chip($("conn"),"Pilih database","busy");
+    status(r.databases.length ? `Login berhasil, ${r.databases.length} database. Pilih salah satu.` : "Login berhasil. Daftar database tidak tersedia; pilih “Ketik slug…”.", "ok");
+  }catch(err){ chip($("conn"),"Login gagal","bad"); status(err.message,"bad"); }
+  steps();
+}
+function setDbs(list){
+  S.dbs=list; const sel=$("db"); sel.innerHTML="";
+  sel.add(new Option(list.length?"Pilih database":"Tidak ada daftar database",""));
+  for(const d of list){ const o=new Option(`${d.name} | ${d.slug}`, d.slug); o.title=o.text; sel.add(o); }
+  sel.add(new Option("Ketik slug…","__manual"));
+}
+function logout(expired){
+  S.token=S.slug=S.email=""; S.lic={ok:false}; S.customers=[]; S.sel.clear();
+  chip($("conn"),"Belum login","idle"); chip($("lic"),"Belum ada database","idle"); $("cust").value=ALL; clearView();
+  status(expired?"Sesi berakhir. Silakan login ulang.":"Login dan pilih database untuk mulai", expired?"bad":""); steps();
+}
+async function pickDb(){
+  let slug=$("db").value;
+  if(slug==="__manual"){ slug=(prompt("Slug database (mis. namapt.zahironline.com)")||"").trim().toLowerCase();
+    if(!slug){ $("db").value=S.slug||""; return; } $("db").add(new Option(slug,slug),$("db").options.length-1); $("db").value=slug; }
+  if(!slug) return;
+  S.slug=slug; S.lic={ok:false}; S.sel.clear(); $("cust").value=ALL; clearView(); steps();
+  chip($("conn"),"Menghubungkan…","busy"); chip($("lic"),"Memeriksa…","busy"); status(`Menghubungkan ke ${slug}…`);
+  try{
+    const r=await api("/api/connect",{server:S.server,slug,license:(store.get("licenses",{}))[slug]||""});
+    chip($("conn"),"Terhubung","ok"); setLic(r.license);
+    status(`Terhubung: ${slug}` + (r.license.ok?"":" (belum teregistrasi)"), r.license.ok?"ok":"bad");
+    if(!r.license.ok && !(store.get("licenses",{}))[slug]) openReg();
+    api("/api/customers",{server:S.server,slug}).then(c=>{ if(S.slug===slug) S.customers=c.customers; }).catch(()=>{});
+  }catch(err){ S.slug=""; chip($("conn"),"Gagal terhubung","bad"); chip($("lic"),"–","idle"); status(err.message,"bad"); }
+  steps();
+}
+function setLic(l){ S.lic=l; const soon=l.expiry && (new Date(l.expiry)-new Date())/864e5<=14;
+  const t=l.message.charAt(0).toUpperCase()+l.message.slice(1);
+  chip($("lic"), t, l.ok?(soon?"warn":"ok"):"bad"); steps(); }
+
+/* ---------- registrasi ---------- */
+function openReg(){ if(!S.slug){ status("Pilih database dulu.","bad"); return; }
+  $("regSlug").value=S.slug; $("regCode").value=(store.get("licenses",{}))[S.slug]||""; $("regMsg").textContent=""; $("dlgReg").showModal(); }
+async function saveReg(){
+  const c=$("regCode").value.trim(); $("regMsg").className="msg"; $("regMsg").textContent="Memeriksa…";
+  try{ const r=await api("/api/license",{slug:S.slug,code:c});
+    if(r.ok){ const l=store.get("licenses",{}); l[S.slug]=c; store.set("licenses",l); setLic(r); $("dlgReg").close(); status(`Registrasi aktif: ${S.slug}`,"ok"); }
+    else { $("regMsg").className="msg bad"; $("regMsg").textContent="Registrasi belum berhasil: "+r.message; } }
+  catch(err){ $("regMsg").className="msg bad"; $("regMsg").textContent=err.message; }
+}
+
+/* ---------- customer ---------- */
+function openCust(){
+  if(!S.customers.length){ status("Daftar customer belum tersedia. Pilih database dulu dan tunggu sampai terhubung.","bad"); return; }
+  S.tmp=new Set(S.sel); $("custQ").value=""; renderCust(); $("dlgCust").showModal(); $("custQ").focus();
+}
+function shownCust(){ const q=$("custQ").value.trim().toLowerCase(); return S.customers.filter(c=>c.name.toLowerCase().includes(q)); }
+function renderCust(){
+  const list=$("custList"), shown=shownCust(); list.innerHTML="";
+  for(const c of shown){ const l=document.createElement("label"), cb=document.createElement("input"); cb.type="checkbox"; cb.checked=S.tmp.has(c.id);
+    cb.onchange=()=>{ cb.checked?S.tmp.add(c.id):S.tmp.delete(c.id); custInfo(shown.length); };
+    l.append(cb, document.createTextNode(c.name)); list.append(l); }
+  custInfo(shown.length);
+}
+function custInfo(n){ $("custInfo").textContent=(S.tmp.size?`${S.tmp.size} dipilih`:"Belum ada yang dipilih = semua customer")+`, ${n} dari ${S.customers.length} ditampilkan`; }
+function applyCust(){ S.sel=new Set(S.tmp); const n=S.sel.size;
+  $("cust").value = !n ? ALL : n===1 ? S.customers.find(c=>S.sel.has(c.id)).name : `${n} customer dipilih`; $("dlgCust").close(); steps(); }
+
+/* ---------- preview / export ---------- */
+function job(){ return {server:S.server, slug:S.slug, license:(store.get("licenses",{}))[S.slug]||"",
+  d1:$("d1").value, d2:$("d2").value, npwp:$("npwp").value, kode_a:$("kodeA").value, kode_b:$("kodeB").value,
+  kode_trx:$("trx").value, ket:$("ket").disabled?"":$("ket").value, cap:$("cap").disabled?"":$("cap").value, cust_ids:[...S.sel]}; }
+async function preview(){
+  status("Menarik data…");
+  try{ S.data=await api("/api/preview",job()); renderData(); status(`${S.data.totals.faktur} faktur, ${S.data.totals.detail} baris detail`,"ok"); }
+  catch(err){ status(err.message,"bad"); }
+}
+async function exportFile(fmt){
+  if($("npwp").value.replace(/\D/g,"").length!==16){ status("Isi NPWP penjual 16 digit.","bad"); $("npwp").focus(); return; }
+  status(`Membuat file ${fmt.toUpperCase()}…`);
+  try{ const r=await api("/api/export/"+fmt, job(), true), blob=await r.blob();
+    const name=(/filename="?([^"]+)"?/.exec(r.headers.get("Content-Disposition")||"")||[])[1]||`Faktur_Keluaran_Coretax.${fmt}`;
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    status(`File diunduh: ${name}`,"ok"); }
+  catch(err){ status(err.message,"bad"); }
+}
+function clearView(){ S.data=null; $("sF").textContent="0"; $("sD").textContent="0"; $("sDpp").textContent=$("sPpn").textContent="Rp 0";
+  $("nF").textContent=$("nD").textContent=""; $("notes").hidden=true; render(); }
+function renderData(){
+  const t=S.data.totals, rp=v=>"Rp "+ni.format(Math.round(v));
+  $("sF").textContent=ni.format(t.faktur); $("sD").textContent=ni.format(t.detail); $("sDpp").textContent=rp(t.dpp); $("sPpn").textContent=rp(t.ppn);
+  $("nF").textContent=t.faktur; $("nD").textContent=t.detail;
+  const box=$("notes"); box.innerHTML="";
+  for(const w of S.data.warnings){ const m=/^(\d+)\s+(.*)$/.exec(w), d=document.createElement("div"); d.className="note";
+    d.innerHTML = m ? `<b>${m[1]}</b>${esc(m[2])}` : esc(w); box.append(d); }
+  box.hidden=!S.data.warnings.length; render();
+}
+function render(){
+  const t=$("tbl"), q=S.q.toLowerCase(), e=$("empty");
+  $("q").placeholder = S.tab==="d" ? "Cari nama barang/jasa" : "Cari pembeli / referensi";
+  if(!S.data){ t.innerHTML=""; e.hidden=false; e.innerHTML="Belum ada data<br>Klik ▶ Preview untuk menarik faktur pada periode ini"; return; }
+  const det=S.data.detail, fak=S.data.faktur;
+  if(S.tab==="d"){
+    const rows=det.filter(r=>String(r["Nama Barang Jasa"]||"").toLowerCase().includes(q)); let prev=null;
+    t.innerHTML=`<thead><tr><th class="c">Baris</th><th class="c">Tipe</th><th>Kode</th><th>Nama barang/jasa</th><th>Satuan</th>
+      <th class="r">Harga satuan</th><th class="r">Jumlah</th><th class="r">Diskon</th><th class="r">DPP</th><th class="r">DPP nilai lain</th>
+      <th class="r">Tarif PPN</th><th class="r">PPN</th><th class="r">PPnBM</th></tr></thead><tbody>`+
+      rows.map(r=>{ const b=r["Baris"], same=b===prev; prev=b; const tp=r["Barang/Jasa"]==="B"?"B":"A";
+        const kode=r.kode_default?`<span class="code" title="Kode default">${esc(r["Kode Barang Jasa"])}</span>`:esc(r["Kode Barang Jasa"]);
+        return `<tr><td class="c idx">${same?'<span class="muted">″</span>':esc(b)}</td><td class="c"><span class="badge ${tp}">${tp}</span></td>
+        <td>${kode}</td><td class="wide" title="${esc(r["Nama Barang Jasa"])}">${r["Nama Barang Jasa"]?esc(r["Nama Barang Jasa"]):'<span class="muted">(tanpa nama)</span>'}</td>
+        <td class="muted">${esc(r["Nama Satuan Ukur"])}</td><td class="r">${money(num(r["Harga Satuan"]))}</td><td class="r">${ni.format(num(r["Jumlah Barang Jasa"]))}</td>
+        <td class="r">${dash(num(r["Total Diskon"]))}</td><td class="r">${money(num(r["DPP"]))}</td><td class="r">${money(num(r["DPP Nilai Lain"]))}</td>
+        <td class="r">${ni.format(num(r["Tarif PPN"]))}%</td><td class="r">${money(num(r["PPN"]))}</td><td class="r">${dash(num(r["PPnBM"]))}</td></tr>`; }).join("")+
+      `</tbody><tfoot><tr><td colspan="8">Total</td><td class="r">${money(sum(rows,"DPP"))}</td><td class="r">${money(sum(rows,"DPP Nilai Lain"))}</td><td></td><td class="r">${money(sum(rows,"PPN"))}</td><td></td></tr></tfoot>`;
+    e.hidden=rows.length>0; e.textContent=rows.length?"":(det.length?"Tidak ada yang cocok dengan pencarian":"Tidak ada data pada periode ini");
+  } else {
+    const by={}; for(const r of det){ (by[r["Baris"]] ||= []).push(r); }
+    const rows=fak.filter(r=>[r["Nama Pembeli"],r["Referensi"],r["NPWP/NIK Pembeli"]].join(" ").toLowerCase().includes(q));
+    t.innerHTML=`<thead><tr><th class="c">Baris</th><th>Tanggal</th><th class="c">Kode trx</th><th>Referensi</th><th>Nama pembeli</th><th>NPWP/NIK pembeli</th>
+      <th>Jenis ID</th><th>Ket. tambahan</th><th>Cap fasilitas</th><th class="c">Jumlah detail</th><th class="r">DPP</th><th class="r">DPP nilai lain</th><th class="r">PPN</th></tr></thead><tbody>`+
+      rows.map(r=>{ const g=by[r["BARIS"]]||[];
+        return `<tr><td class="c idx">${esc(r["BARIS"])}</td><td>${esc(r["Tanggal Faktur"])}</td><td class="c">${esc(r["Kode Transaksi"])}</td><td>${esc(r["Referensi"])}</td>
+        <td class="wide" title="${esc(r["Nama Pembeli"])}">${esc(r["Nama Pembeli"])}</td><td>${esc(r["NPWP/NIK Pembeli"])}</td><td class="muted">${esc(r["Jenis ID Pembeli"])}</td>
+        <td>${r["Keterangan Tambahan"]?esc(r["Keterangan Tambahan"]):'<span class="muted">–</span>'}</td><td>${r["Cap Fasilitas"]?esc(r["Cap Fasilitas"]):'<span class="muted">–</span>'}</td>
+        <td class="c">${g.length}</td><td class="r">${money(sum(g,"DPP"))}</td><td class="r">${money(sum(g,"DPP Nilai Lain"))}</td><td class="r">${money(sum(g,"PPN"))}</td></tr>`; }).join("")+
+      `</tbody><tfoot><tr><td colspan="9">Total</td><td class="c">${rows.reduce((a,r)=>a+(by[r["BARIS"]]||[]).length,0)}</td>`+
+      ["DPP","DPP Nilai Lain","PPN"].map(k=>`<td class="r">${money(rows.reduce((a,r)=>a+sum(by[r["BARIS"]]||[],k),0))}</td>`).join("")+`</tr></tfoot>`;
+    e.hidden=rows.length>0; e.textContent=rows.length?"":(fak.length?"Tidak ada yang cocok dengan pencarian":"Tidak ada data pada periode ini");
+  }
+}
+const sum=(rows,k)=>rows.reduce((a,r)=>a+num(r[k]),0);
+
+/* ---------- lain-lain ---------- */
+async function diag(){
+  status("Menguji akses ke tabel…");
+  try{ const r=await api("/api/diagnose",{server:S.server,slug:S.slug}), out=$("diagOut"); out.innerHTML="";
+    for(const x of r.results){ const p=document.createElement("p"); p.className=x.ok?"y":"x"; p.textContent=(x.ok?"✓  ":"✗  ")+x.name+(x.ok?"":"   "+x.detail); out.append(p); }
+    const bad=r.results.filter(x=>!x.ok).map(x=>x.name), p=document.createElement("p");
+    p.textContent = !bad.length ? "Semua tabel bisa dibaca." : bad.length===r.results.length ? "Semua query ditolak: akun ini tidak punya izin zsql di database ini." : "Tabel yang ditolak: "+bad.join(", ");
+    out.append(p); $("dlgDiag").showModal(); status("Tes akses selesai"); }
+  catch(err){ status(err.message,"bad"); }
+}
+async function loadRef(file){
+  const fd=new FormData(); fd.append("file",file);
+  try{ const r=await api("/api/refs/parse",fd), own=store.get("refs",{}); Object.assign(own,r.refs); store.set("refs",own);
+    fillSelect($("trx"), refs().trx, $("trx").value, false); trxChanged();
+    status("Referensi diperbarui: "+Object.entries(r.refs).map(([k,v])=>`${k} ${v.length} item`).join(", "),"ok"); }
+  catch(err){ status(err.message,"bad"); }
+}
+
+/* ---------- mulai ---------- */
+(async function init(){
+  S.cfg = await (await fetch("/api/config")).json();
+  $("server").value=store.get("server", S.cfg.default_server); $("email").value=store.get("email","");
+  for(const s of new Set([S.cfg.default_server, ...store.get("servers",[])])) $("servers").append(new Option(s));
+  $("npwp").value=store.get("npwp",""); $("kodeA").value=store.get("kode_a","000000"); $("kodeB").value=store.get("kode_b","000000");
+  fillSelect($("trx"), refs().trx, store.get("kode_trx","04"), false); trxChanged(); setMonth(0);
+  $("loginBox").addEventListener("submit", doLogin); $("btnLogout").onclick=()=>logout(false); $("db").onchange=pickDb;
+  $("btnReg").onclick=openReg; $("regSave").onclick=saveReg;
+  $("regCopy").onclick=()=>navigator.clipboard.writeText(S.slug).then(()=>{ $("regMsg").className="msg ok"; $("regMsg").textContent="Slug disalin."; });
+  $("btnCust").onclick=openCust; $("cust").onclick=openCust; $("custQ").oninput=renderCust;
+  $("custAll").onclick=()=>{ shownCust().forEach(c=>S.tmp.add(c.id)); renderCust(); }; $("custNone").onclick=()=>{ S.tmp.clear(); renderCust(); }; $("custApply").onclick=applyCust;
+  document.querySelectorAll("[data-month]").forEach(b=>b.onclick=()=>setMonth(b.dataset.month));
+  $("trx").onchange=trxChanged; $("ket").onchange=$("cap").onchange=()=>{ save(); steps(); };
+  ["npwp","kodeA","kodeB","d1","d2"].forEach(i=>$(i).addEventListener("input",()=>{ save(); steps(); }));
+  $("btnPreview").onclick=preview; $("btnXlsx").onclick=()=>exportFile("xlsx"); $("btnXml").onclick=()=>exportFile("xml"); $("btnDiag").onclick=diag;
+  $("btnRef").onclick=()=>$("refFile").click(); $("refFile").onchange=e=>{ if(e.target.files[0]) loadRef(e.target.files[0]); e.target.value=""; };
+  document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{ S.tab=b.dataset.t;
+    document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b)); render(); });
+  $("q").oninput=e=>{ S.q=e.target.value; render(); };
+  render(); steps();
+})();
+</script>
+</body>
+</html>

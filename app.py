@@ -138,7 +138,18 @@ def login():
     if not email or not pw: raise ApiError("Email dan password wajib diisi.")
     proto, host = server_of(b.get("server"))
     client = CLIENTS.get(host.split(":")[0].lower(), core.CLIENT_B64)
-    tok, me = core.login(email, pw, f"{proto}://{host}", client)
+    try:
+        tok, me = core.login(email, pw, f"{proto}://{host}", client)
+    except RuntimeError as ex:
+        # Pesan mentah dari Zahir berupa JSON; tampilkan versi singkat yang jelas di layar login.
+        t = str(ex)
+        m = re.search(r"HTTP (\d+)", t)
+        code = int(m.group(1)) if m else 502
+        if code in (400, 401):
+            raise ApiError("Email atau password salah. Periksa kembali akun Zahir Anda.", 401)
+        if code == 403:
+            raise ApiError("Akun ini tidak diizinkan masuk ke server tersebut.", 403)
+        raise ApiError(f"Login gagal (HTTP {code}). Coba lagi atau periksa alamat server.", 502)
     dbs, note = core.list_companies({"token": tok, "protocol": proto, "server": host}, me)
     return jsonify(token=tok, server=host, databases=[{"name": n, "slug": s} for n, s in dbs], note=note)
 

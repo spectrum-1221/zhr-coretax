@@ -136,6 +136,39 @@ textarea{font-family:Consolas,monospace;font-size:12.5px;border:1px solid var(--
 .msg{font-size:12px;min-height:16px}.msg.bad{color:var(--bad)}.msg.ok{color:var(--ok)}
 .diag p{margin:4px 0;font-family:Consolas,monospace;font-size:12.5px}.diag .y{color:var(--ok)}.diag .x{color:var(--bad)}
 
+/* ---------- layar login ---------- */
+.login{position:fixed;inset:0;display:grid;grid-template-columns:1fr 1fr;border-top:13px solid #4e342e;background:#eceff4;z-index:50;overflow:auto}
+.login-l{position:relative;display:flex;flex-direction:column;padding:42px 60px 28px;
+  background:radial-gradient(circle at 85% 95%,#fdeae6 0,transparent 38%),linear-gradient(180deg,#fff,#faf9fb)}
+.login-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:34px;letter-spacing:-.5px;color:#e94e3c;line-height:1}
+.login-brand .mark{width:56px;height:56px;border-radius:50%;background:#e94e3c;color:#fff;display:grid;place-items:center;font-size:36px;font-weight:800;letter-spacing:0}
+.login-brand .z{color:#e94e3c} .login-brand .t{color:#e94e3c;font-weight:600}
+.login-art{flex:1;display:grid;place-items:center;min-height:0;padding:10px 0}
+.login-art svg{width:min(100%,560px);height:auto;max-height:100%}
+.login-tag{text-align:center;color:var(--ink-2);font-size:15px;margin:0}
+.login-ver{text-align:center;color:#9fb0c4;font:12px Consolas,monospace;margin:14px 0 0}
+.login-r{display:grid;place-items:center;padding:32px}
+.login-card{width:min(525px,100%);background:#fff;border-radius:18px;padding:42px 43px 44px;box-shadow:0 24px 60px rgba(22,32,46,.12)}
+.login-card h1{margin:0;font-size:28px;line-height:1.1;color:#101a2e}
+.login-card .sub{margin:8px 0 28px;color:var(--ink-2);font-size:14px}
+.lf{margin-bottom:18px}
+.lf>label{display:block;margin-bottom:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.lin{width:100%;height:48px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:15px}
+.lin:hover{border-color:#c5d0df}
+.lin:focus{border-color:var(--brand);outline:0;box-shadow:0 0 0 3px var(--brand-l)}
+.lin:-webkit-autofill{-webkit-box-shadow:0 0 0 40px #e8eefb inset;-webkit-text-fill-color:var(--ink)}
+.lrow{display:flex;gap:10px}.lrow .lin{flex:1;min-width:0}
+.lbtn-o{flex:0 0 auto;height:48px;padding:0 18px;border:1px solid var(--brand);border-radius:8px;background:#fff;color:var(--brand);font-weight:600;font-size:15px;cursor:pointer}
+.lbtn-o:hover{background:var(--brand-l)}
+.lbtn{width:100%;height:54px;margin-top:10px;border:0;border-radius:8px;background:#0a4060;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+.lbtn:hover:not(:disabled){background:#073249}
+.lbtn:disabled{opacity:.65;cursor:default}
+.lmsg{min-height:20px;margin-top:14px;font-size:13px;text-align:center}.lmsg.bad{color:var(--bad)}.lmsg.ok{color:var(--ok)}
+@media (max-width:900px){
+  .login{grid-template-columns:1fr}
+  .login-l{display:none}
+  .login-card{padding:32px 24px}
+}
 @media (max-width:900px){
   .app{height:auto;min-height:100%;grid-template-rows:52px auto 28px}
   main{grid-template-columns:1fr} aside{border-right:0;border-bottom:1px solid var(--line);overflow:visible}
@@ -147,7 +180,68 @@ textarea{font-family:Consolas,monospace;font-size:12.5px;border:1px solid var(--
 </style>
 </head>
 <body>
-<div class="app">
+<!-- ===== Layar login ===== -->
+<div class="login" id="loginView">
+  <div class="login-l">
+    <div class="login-brand"><span class="mark">Z</span><span class="z">Zahir</span><span class="t">CoreBridge</span></div>
+    <div class="login-art" aria-hidden="true">
+      <svg viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#16202e" flood-opacity=".14"/></filter>
+        </defs>
+        <circle cx="505" cy="125" r="86" fill="#fbe3e0"/>
+        <circle cx="62" cy="372" r="58" fill="#e0edf6"/>
+        <rect x="140" y="78" width="385" height="385" rx="16" fill="#dfe4eb" opacity=".75"/>
+        <g filter="url(#sh)">
+          <rect x="108" y="48" width="380" height="392" rx="18" fill="#fff"/>
+        </g>
+        <path d="M108 66a18 18 0 0 1 18-18h344a18 18 0 0 1 18 18v28H108z" fill="#101a2e"/>
+        <circle cx="140" cy="72" r="6.5" fill="#ef4b3f"/><circle cx="162" cy="72" r="6.5" fill="#f5a623"/><circle cx="184" cy="72" r="6.5" fill="#2fb55e"/>
+        <rect x="138" y="122" width="150" height="12" rx="6" fill="#1d2a44"/>
+        <rect x="138" y="144" width="236" height="6" rx="3" fill="#cdd5e0"/>
+        <rect x="372" y="122" width="88" height="9" rx="4.5" fill="#e3e8ef"/>
+        <rect x="372" y="142" width="74" height="9" rx="4.5" fill="#e3e8ef"/>
+        <rect x="388" y="162" width="72" height="9" rx="4.5" fill="#e3e8ef"/>
+        <rect x="388" y="182" width="48" height="9" rx="4.5" fill="#e3e8ef"/>
+        <line x1="138" y1="388" x2="456" y2="388" stroke="#dde3ea" stroke-width="2"/>
+        <rect x="138" y="318" width="32" height="70" rx="3" fill="#1e86bd"/>
+        <rect x="184" y="278" width="32" height="110" rx="3" fill="#ee5d47"/>
+        <rect x="230" y="298" width="32" height="90" rx="3" fill="#2f9bd3"/>
+        <rect x="276" y="246" width="32" height="142" rx="3" fill="#ee5d47"/>
+        <rect x="322" y="268" width="32" height="120" rx="3" fill="#4fb0e0"/>
+        <polyline points="138,300 180,262 224,290 288,222 336,246 380,206 410,210" fill="none" stroke="#0b7bb5" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="418" cy="212" r="8" fill="#fff" stroke="#0b7bb5" stroke-width="4"/>
+        <g filter="url(#sh)"><rect x="26" y="220" width="74" height="74" rx="14" fill="#e94e3c"/></g>
+        <path d="M48 258l17 17 28-33" transform="translate(-14 -4)" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <g filter="url(#sh)"><rect x="404" y="364" width="170" height="80" rx="14" fill="#fff"/></g>
+        <rect x="424" y="382" width="50" height="8" rx="4" fill="#c9d1dc"/>
+        <circle cx="548" cy="385" r="9" fill="#e6f6ee"/><path d="M543.5 385l3.2 3.2 6-6.4" fill="none" stroke="#1fa65a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="424" y="425" font-family="Segoe UI,system-ui,Arial,sans-serif" font-size="25" font-weight="700" fill="#16202e">1.250.000</text>
+      </svg>
+    </div>
+    <p class="login-tag">Faktur Pajak Keluaran Coretax, langsung dari data Zahir Online Anda.</p>
+    <p class="login-ver">versi web</p>
+  </div>
+
+  <div class="login-r">
+    <form class="login-card" id="loginBox" autocomplete="on">
+      <h1>Masuk</h1>
+      <p class="sub">Masuk ke Zahir CoreBridge dengan akun Zahir Anda.</p>
+      <div class="lf"><label for="server">Server</label>
+        <div class="lrow">
+          <input class="lin" id="server" list="servers" placeholder="go.zahironline.com" autocomplete="url" spellcheck="false">
+          <datalist id="servers"></datalist>
+          <button class="lbtn-o" id="btnSaveServer" type="button">Simpan</button>
+        </div></div>
+      <div class="lf"><label for="email">Email</label><input class="lin" id="email" type="email" autocomplete="username"></div>
+      <div class="lf"><label for="password">Password</label><input class="lin" id="password" type="password" autocomplete="current-password"></div>
+      <button class="lbtn" id="btnLogin" type="submit">Masuk</button>
+      <div class="lmsg" id="loginMsg" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</div>
+
+<div class="app" id="appRoot" hidden>
   <header>
     <div class="logo">Z</div>
     <div class="brand">Zahir CoreBridge<small>Laporan pajak dari Zahir Online</small></div>
@@ -160,13 +254,6 @@ textarea{font-family:Consolas,monospace;font-size:12.5px;border:1px solid var(--
       <!-- 1 -->
       <section class="step">
         <div class="step-h"><span class="num" id="n1">1</span><h2>Akun &amp; database</h2></div>
-        <form id="loginBox" autocomplete="on">
-          <div class="field"><label for="server">Server</label>
-            <input class="in" id="server" list="servers" placeholder="go.zahironline.com" autocomplete="url"><datalist id="servers"></datalist></div>
-          <div class="field"><label for="email">Email</label><input class="in" id="email" type="email" autocomplete="username"></div>
-          <div class="field"><label for="password">Password</label><input class="in" id="password" type="password" autocomplete="current-password"></div>
-          <button class="btn primary block" id="btnLogin" type="submit">Login</button>
-        </form>
         <div id="accountBox" hidden>
           <div class="account" id="account"></div>
           <div class="field"><label for="db">Database</label><select class="in" id="db"></select></div>
@@ -305,7 +392,7 @@ function steps(){
   const ready=done[0];
   ["btnPreview","btnXlsx","btnXml"].forEach(b=>$(b).disabled=!ready);
   $("btnDiag").disabled=!(S.token && S.slug);
-  $("loginBox").hidden=!!S.token; $("accountBox").hidden=!S.token;
+  $("loginView").hidden=!!S.token; $("appRoot").hidden=!S.token; $("accountBox").hidden=!S.token;
   $("account").innerHTML = S.token ? `<b>${esc(S.email)}</b>di ${esc(S.server)}${S.slug?"<br>"+esc(S.slug):""}` : "";
 }
 
@@ -325,16 +412,26 @@ function setMonth(off){
 async function doLogin(e){
   e.preventDefault();
   const server=$("server").value.trim()||S.cfg.default_server, email=$("email").value.trim(), password=$("password").value;
-  if(!email||!password){ status("Email dan password wajib diisi.","bad"); return; }
+  if(!email||!password){ loginMsg("Email dan password wajib diisi.","bad"); return; }
   chip($("conn"),"Login…","busy"); status(`Login ke ${server}…`);
+  const btn=$("btnLogin"); btn.disabled=true; btn.textContent="Memproses…"; loginMsg("");
   try{
     const r=await api("/api/login",{server,email,password});
     $("password").value=""; S.token=r.token; S.server=r.server; S.email=email;
     store.set("email",email); const sv=store.get("servers",[]); if(!sv.includes(r.server)){ sv.push(r.server); store.set("servers",sv); } store.set("server",r.server);
     setDbs(r.databases); chip($("conn"),"Pilih database","busy");
     status(r.databases.length ? `Login berhasil, ${r.databases.length} database. Pilih salah satu.` : "Login berhasil. Daftar database tidak tersedia; pilih “Ketik slug…”.", "ok");
-  }catch(err){ chip($("conn"),"Login gagal","bad"); status(err.message,"bad"); }
+  }catch(err){ chip($("conn"),"Login gagal","bad"); status(err.message,"bad"); loginMsg(err.message,"bad"); }
+  btn.disabled=false; btn.textContent="Masuk";
   steps();
+}
+function loginMsg(t,kind=""){ const m=$("loginMsg"); m.className="lmsg"+(kind?" "+kind:""); m.textContent=t||""; }
+function saveServer(){
+  const v=$("server").value.trim().toLowerCase().replace(/^https?:\/\//,"").replace(/\/+$/,"");
+  if(!v){ loginMsg("Isi alamat server dulu.","bad"); $("server").focus(); return; }
+  $("server").value=v; store.set("server",v);
+  const sv=store.get("servers",[]); if(!sv.includes(v)){ sv.push(v); store.set("servers",sv); $("servers").append(new Option(v)); }
+  loginMsg(`Server disimpan: ${v}`,"ok");
 }
 function setDbs(list){
   S.dbs=list; const sel=$("db"); sel.innerHTML="";
@@ -345,7 +442,8 @@ function setDbs(list){
 function logout(expired){
   S.token=S.slug=S.email=""; S.lic={ok:false}; S.customers=[]; S.sel.clear();
   chip($("conn"),"Belum login","idle"); chip($("lic"),"Belum ada database","idle"); $("cust").value=ALL; clearView();
-  status(expired?"Sesi berakhir. Silakan login ulang.":"Login dan pilih database untuk mulai", expired?"bad":""); steps();
+  status(expired?"Sesi berakhir. Silakan login ulang.":"Login dan pilih database untuk mulai", expired?"bad":"");
+  loginMsg(expired?"Sesi berakhir. Silakan login ulang.":"", expired?"bad":""); steps();
 }
 async function pickDb(){
   let slug=$("db").value;
@@ -485,7 +583,7 @@ async function loadRef(file){
   for(const s of new Set([S.cfg.default_server, ...store.get("servers",[])])) $("servers").append(new Option(s));
   $("npwp").value=store.get("npwp",""); $("kodeA").value=store.get("kode_a","000000"); $("kodeB").value=store.get("kode_b","000000");
   fillSelect($("trx"), refs().trx, store.get("kode_trx","04"), false); trxChanged(); setMonth(0);
-  $("loginBox").addEventListener("submit", doLogin); $("btnLogout").onclick=()=>logout(false); $("db").onchange=pickDb;
+  $("loginBox").addEventListener("submit", doLogin); $("btnSaveServer").onclick=saveServer; $("btnLogout").onclick=()=>logout(false); $("db").onchange=pickDb;
   $("btnReg").onclick=openReg; $("regSave").onclick=saveReg;
   $("regCopy").onclick=()=>navigator.clipboard.writeText(S.slug).then(()=>{ $("regMsg").className="msg ok"; $("regMsg").textContent="Slug disalin."; });
   $("btnCust").onclick=openCust; $("cust").onclick=openCust; $("custQ").oninput=renderCust;

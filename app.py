@@ -25,6 +25,9 @@ ALLOWED = [s.strip().lower().lstrip(".") for s in
 if os.environ.get("FIREBASE_API_KEY"):
     core.FIREBASE_API_KEY = os.environ["FIREBASE_API_KEY"]
 core.CLIENT_B64 = (core.CLIENT_B64 or "").strip()
+# Client situs go.zahironline.com (ZahirOnline-GO): client_id sama dengan bawaan, secret beda satu digit.
+# Sama seperti repo zahir-report: login mencoba GO dulu, lalu bawaan, bila Zahir membalas 401.
+GO_CLIENT_B64 = "NjljYjNlYTMxN2EzMmM0ZTYxNDNlNjY1ZmRiMjBiMTQ6MTEyNmQ1MWQyZTkwZjg="
 CLIENT_FROM_ENV = bool((os.environ.get("ZAHIR_CLIENT_B64") or "").strip())
 CLIENTS = {}                                                  # client khusus per host: env ZAHIR_CLIENT_<HOST>
 for k, v in os.environ.items():
@@ -146,20 +149,27 @@ def login():
     email, pw = str(b.get("email") or "").strip(), str(b.get("password") or "")
     if not email or not pw: raise ApiError("Email dan password wajib diisi.")
     proto, host = server_of(b.get("server"))
-    client = CLIENTS.get(host.split(":")[0].lower(), core.CLIENT_B64)
-    try:
-        tok, me = core.login(email, pw, f"{proto}://{host}", client)
-    except RuntimeError as ex:
-        # Pesan mentah dari Zahir berupa JSON; tampilkan versi singkat yang jelas di layar login.
-        t = str(ex)
-        m = re.search(r"HTTP (\d+)", t)
-        code = int(m.group(1)) if m else 502
-        print(f"[login] host={host} http={code} client_id={_client_id(client)} sumber={'env' if client is core.CLIENT_B64 and CLIENT_FROM_ENV else 'bawaan/host'}", flush=True)
-        if code in (400, 401):
-            raise ApiError("Email atau password salah. Periksa kembali akun Zahir Anda.", 401)
-        if code == 403:
-            raise ApiError("Akun ini tidak diizinkan masuk ke server tersebut.", 403)
-        raise ApiError(f"Login gagal (HTTP {code}). Coba lagi atau periksa alamat server.", 502)
+    base = f"{proto}://{host}"
+    own = CLIENTS.get(host.split(":")[0].lower())        # client khusus host dari env: dipakai apa adanya
+    tries = [own] if own else list(dict.fromkeys([GO_CLIENT_B64, core.CLIENT_B64]))
+    tok = me = None
+    for i, client in enumerate(tries):
+        try:
+            tok, me = core.login(email, pw, base, client)
+            break
+        except RuntimeError as ex:
+            t = str(ex)
+            m = re.search(r"HTTP (\d+)", t)
+            code = int(m.group(1)) if m else 502
+            print(f"[login] host={host} http={code} client_id={_client_id(client)} percobaan={i + 1}/{len(tries)}", flush=True)
+            if code == 401 and i < len(tries) - 1:
+                continue                                  # coba client berikutnya
+            # Pesan mentah dari Zahir berupa JSON; tampilkan versi singkat yang jelas di layar login.
+            if code in (400, 401):
+                raise ApiError("Email atau password salah. Periksa kembali akun Zahir Anda.", 401)
+            if code == 403:
+                raise ApiError("Akun ini tidak diizinkan masuk ke server tersebut.", 403)
+            raise ApiError(f"Login gagal (HTTP {code}). Coba lagi atau periksa alamat server.", 502)
     dbs, note = core.list_companies({"token": tok, "protocol": proto, "server": host}, me)
     return jsonify(token=tok, server=host, databases=[{"name": n, "slug": s} for n, s in dbs], note=note)
 

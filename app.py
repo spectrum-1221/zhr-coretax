@@ -23,8 +23,6 @@ app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024          # unggah template re
 # Isi env ALLOWED_SERVERS dengan akhiran domain dipisah koma, mis. "zahironline.com,zahirerp.com,erp.perusahaan.co.id".
 ALLOWED = [s.strip().lower().lstrip(".") for s in
            os.environ.get("ALLOWED_SERVERS", "zahironline.com,zahirerp.com").split(",") if s.strip()]
-if os.environ.get("FIREBASE_API_KEY"):
-    core.FIREBASE_API_KEY = os.environ["FIREBASE_API_KEY"]
 core.CLIENT_B64 = (core.CLIENT_B64 or "").strip()
 # Client situs go.zahironline.com (ZahirOnline-GO): client_id sama dengan bawaan, secret beda satu digit.
 # Sama seperti repo zahir-report: login mencoba GO dulu, lalu bawaan, bila Zahir membalas 401.
@@ -93,16 +91,9 @@ def conn(b):
     return {"token": tok, "slug": slug, "protocol": proto.upper(), "server": host, "url": f"{proto}://{host}/api/v2/zsql"}
 
 
-def need_license(slug, code):
-    ok, msg, exp = core.license_state(slug, code)
-    if not ok: raise ApiError(f"Database ini {msg}. Masukkan kode registrasi dari admin.", 403)
-    return exp
-
-
 def job(b):
     """Parameter fetch() dari form web."""
     f = conn(b)
-    need_license(f["slug"], b.get("license"))
     ids = [str(x) for x in (b.get("cust_ids") or [])][:2000]
     f.update(d1=str(b.get("d1") or ""), d2=str(b.get("d2") or ""), npwp=str(b.get("npwp") or ""),
              kode_a=str(b.get("kode_a") or ""), kode_b=str(b.get("kode_b") or ""),
@@ -284,16 +275,7 @@ def companies():
 def connect():
     b = body(); f = conn(b)
     core.run("SELECT 1 AS ok", f)
-    ok, msg, exp = core.license_state(f["slug"], b.get("license"))
-    return jsonify(slug=f["slug"], license={"ok": ok, "message": msg, "expiry": exp.isoformat() if exp else None})
-
-
-@app.post("/api/license")
-def license_check():
-    b = body()
-    slug = str(b.get("slug") or "").strip().lower()
-    ok, msg, exp = core.license_state(slug, b.get("code"))
-    return jsonify(ok=ok, message=msg, expiry=exp.isoformat() if exp else None)
+    return jsonify(slug=f["slug"])
 
 
 @app.post("/api/customers")

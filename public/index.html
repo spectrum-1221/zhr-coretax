@@ -164,6 +164,43 @@ textarea{font-family:Consolas,monospace;font-size:12.5px;border:1px solid var(--
 .lbtn:hover:not(:disabled){background:#073249}
 .lbtn:disabled{opacity:.65;cursor:default}
 .lmsg{min-height:20px;margin-top:14px;font-size:13px;text-align:center}.lmsg.bad{color:var(--bad)}.lmsg.ok{color:var(--ok)}
+/* ---------- pilih perusahaan ---------- */
+.co-view{position:fixed;inset:0;overflow:auto;background:#eceff4;z-index:40}
+.co-wrap{margin:0 auto;padding:24px clamp(16px,5.5vw,106px) 40px}
+.co-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.co-head h1{margin:0;font-size:28px;line-height:1.15;color:#101a2e}
+.co-cnt{margin-top:6px;color:var(--ink-2);font-size:14px}
+.co-signed{margin-left:auto;text-align:right}
+.co-signed .as{font-size:24px;color:var(--ink-2)}.co-signed .as b{color:#101a2e}
+.co-signed .em{font-size:15px;color:var(--brand)}
+.co-tools{display:flex;justify-content:flex-end;gap:12px;margin:18px 0 14px}
+.co-q{width:375px;max-width:100%;height:48px;padding:0 15px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:15px}
+.co-q:focus{border-color:var(--brand);outline:0;box-shadow:0 0 0 3px var(--brand-l)}
+.co-btn{height:48px;padding:0 18px;border:1px solid var(--brand);border-radius:8px;background:#fff;color:var(--brand);font-weight:600;font-size:15px;cursor:pointer}
+.co-btn:hover{background:var(--brand-l)}
+.co-btn.ico{width:51px;padding:0;font-size:20px}
+.co-card{background:#fff;border-radius:14px;overflow:hidden}
+.co-tbl{width:100%;border-collapse:collapse}
+.co-tbl th{text-align:left;font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);padding:18px 17px;border-bottom:1px solid var(--line)}
+.co-tbl td{padding:15px 17px;border-bottom:1px solid #eef1f5;font-size:16px;vertical-align:middle}
+.co-tbl tr.r{cursor:pointer}
+.co-tbl tr.r:nth-child(even) td{background:#f7f9fb}
+.co-tbl tr.r:hover td{background:#e8f3fa}
+.co-tbl tr.r.sel td{background:#d6ebf7}
+.co-tbl .nm{font-weight:500;color:#101a2e}
+.co-tbl .sl{margin-top:2px;font:13px Consolas,"Courier New",monospace;color:var(--ink-2);word-break:break-all}
+.co-tbl .empty{text-align:center;color:var(--ink-3);padding:36px}
+.cb{display:inline-block;padding:5px 17px;border-radius:5px;color:#fff;font-size:14px;font-weight:600;background:#8896ab;white-space:nowrap}
+.cb.active{background:#2eaa5a}.cb.trial{background:#f0a830}.cb.expired{background:#c62828}
+.co-hint{margin:12px 2px 0;color:var(--ink-3);font-size:13px}
+.co-msg{text-align:left;margin-top:10px}
+.co-adv{margin-top:16px;font-size:13px;color:var(--ink-2)}.co-adv summary{cursor:pointer}
+.co-adv .lrow{max-width:520px;margin-top:10px}
+@media (max-width:760px){
+  .co-tbl th:nth-child(2),.co-tbl td:nth-child(2),.co-tbl th:nth-child(3),.co-tbl td:nth-child(3){display:none}
+  .co-signed{margin-left:0;text-align:left}.co-signed .as{font-size:18px}
+  .co-tools{flex-wrap:wrap}.co-q{flex:1 1 100%;width:auto;order:3}
+}
 @media (max-width:900px){
   .login{grid-template-columns:1fr}
   .login-l{display:none}
@@ -241,6 +278,27 @@ textarea{font-family:Consolas,monospace;font-size:12.5px;border:1px solid var(--
   </div>
 </div>
 
+<!-- ===== Pilih perusahaan ===== -->
+<div class="co-view" id="coView" hidden>
+  <div class="co-wrap">
+    <div class="co-head">
+      <div><h1>Pilih Perusahaan</h1><div class="co-cnt" id="coCnt">—</div></div>
+      <div class="co-signed"><div class="as">Signed as <b id="sName"></b></div><div class="em" id="sEmail"></div></div>
+    </div>
+    <div class="co-tools">
+      <button class="co-btn" id="coLogout" type="button">Keluar</button>
+      <input class="co-q" id="coQ" placeholder="Cari Perusahaan" autocomplete="off" aria-label="Cari perusahaan">
+      <button class="co-btn ico" id="coReload" type="button" title="Muat ulang" aria-label="Muat ulang">&#8635;</button>
+    </div>
+    <div class="co-card"><table class="co-tbl"><thead><tr><th style="width:40%">Perusahaan</th><th>Versi</th><th>Edisi</th><th>Kedaluarsa</th><th>Status</th></tr></thead><tbody id="coBody"></tbody></table></div>
+    <div class="co-hint">Klik dua kali baris perusahaan untuk membukanya, atau pilih lalu tekan Enter.</div>
+    <div class="lmsg co-msg" id="coMsg" role="status" aria-live="polite"></div>
+    <details class="co-adv"><summary>Alamat database manual (slug)</summary>
+      <div class="lrow"><input class="lin" id="manualDb" placeholder="namapt-pg.zahironline.com" spellcheck="false"><button class="lbtn-o" id="btnManualDb" type="button">Buka</button></div>
+    </details>
+  </div>
+</div>
+
 <div class="app" id="appRoot" hidden>
   <header>
     <div class="logo">Z</div>
@@ -256,11 +314,11 @@ textarea{font-family:Consolas,monospace;font-size:12.5px;border:1px solid var(--
         <div class="step-h"><span class="num" id="n1">1</span><h2>Akun &amp; database</h2></div>
         <div id="accountBox" hidden>
           <div class="account" id="account"></div>
-          <div class="field"><label for="db">Database</label><select class="in" id="db"></select></div>
           <div class="field"><label>Registrasi</label>
             <div class="lic"><span class="chip idle" id="lic">Belum ada database</span><button class="btn sm" id="btnReg" type="button">Registrasi…</button></div></div>
           <div class="row" style="margin-top:12px">
             <button class="btn sm" id="btnDiag" type="button" disabled>Tes akses database</button>
+            <button class="btn sm" id="btnCo" type="button">Ganti perusahaan</button>
             <button class="btn sm" id="btnLogout" type="button">Logout</button>
           </div>
         </div>
@@ -392,7 +450,7 @@ function steps(){
   const ready=done[0];
   ["btnPreview","btnXlsx","btnXml"].forEach(b=>$(b).disabled=!ready);
   $("btnDiag").disabled=!(S.token && S.slug);
-  $("loginView").hidden=!!S.token; $("appRoot").hidden=!S.token; $("accountBox").hidden=!S.token;
+  $("loginView").hidden=!!S.token; $("coView").hidden=!S.token||!!S.slug; $("appRoot").hidden=!S.token||!S.slug; $("accountBox").hidden=!S.token;
   $("account").innerHTML = S.token ? `<b>${esc(S.email)}</b>di ${esc(S.server)}${S.slug?"<br>"+esc(S.slug):""}` : "";
 }
 
@@ -419,8 +477,8 @@ async function doLogin(e){
     const r=await api("/api/login",{server,email,password});
     $("password").value=""; S.token=r.token; S.server=r.server; S.email=email;
     store.set("email",email); const sv=store.get("servers",[]); if(!sv.includes(r.server)){ sv.push(r.server); store.set("servers",sv); } store.set("server",r.server);
-    setDbs(r.databases); chip($("conn"),"Pilih database","busy");
-    status(r.databases.length ? `Login berhasil, ${r.databases.length} database. Pilih salah satu.` : "Login berhasil. Daftar database tidak tersedia; pilih “Ketik slug…”.", "ok");
+    setCompanies(r.companies, r.user); chip($("conn"),"Pilih perusahaan","busy"); coMsg(r.companies.length?"":"Daftar perusahaan tidak tersedia"+(r.note?" ("+r.note+")":"")+". Isi alamat database manual di bawah.", r.companies.length?"":"bad");
+    status(r.companies.length ? `Login berhasil, ${r.companies.length} perusahaan. Pilih salah satu.` : "Login berhasil. Daftar perusahaan tidak tersedia; isi slug manual.", "ok");
   }catch(err){ chip($("conn"),"Login gagal","bad"); status(err.message,"bad"); loginMsg(err.message,"bad"); }
   btn.disabled=false; btn.textContent="Masuk";
   steps();
@@ -433,32 +491,55 @@ function saveServer(){
   const sv=store.get("servers",[]); if(!sv.includes(v)){ sv.push(v); store.set("servers",sv); $("servers").append(new Option(v)); }
   loginMsg(`Server disimpan: ${v}`,"ok");
 }
-function setDbs(list){
-  S.dbs=list; const sel=$("db"); sel.innerHTML="";
-  sel.add(new Option(list.length?"Pilih database":"Tidak ada daftar database",""));
-  for(const d of list){ const o=new Option(`${d.name} | ${d.slug}`, d.slug); o.title=o.text; sel.add(o); }
-  sel.add(new Option("Ketik slug…","__manual"));
+/* ---------- pilih perusahaan ---------- */
+let coSel=-1;
+function coMsg(t,kind=""){ const m=$("coMsg"); m.className="lmsg co-msg"+(kind?" "+kind:""); m.textContent=t||""; }
+function setCompanies(list,user){
+  S.companies=list||[]; S.user=user||{}; coSel=-1; $("coQ").value="";
+  $("sName").textContent=S.user.name||S.email; $("sEmail").textContent=S.user.email||S.email; renderCo();
+}
+const fmtExp=v=>{ if(!v) return ""; const d=new Date(v); return isNaN(d)?esc(v):d.toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}); };
+const badge=s=>{ const k=s==="Active"?"active":s==="Trial"?"trial":(s==="Expired"||s==="Post Subscribe")?"expired":""; return s?`<span class="cb ${k}">${esc(s)}</span>`:""; };
+function renderCo(){
+  const q=$("coQ").value.trim().toLowerCase(), all=S.companies||[];
+  const items=all.map((c,i)=>({c,i})).filter(({c})=>!q||(c.name+" "+c.slug).toLowerCase().includes(q));
+  $("coCnt").textContent=`${items.length} Perusahaan`+(q?` (dari ${all.length})`:"");
+  $("coBody").innerHTML=items.length ? items.map(({c,i})=>`<tr class="r${i===coSel?" sel":""}" data-i="${i}"><td><div class="nm">${esc(c.name)}</div><div class="sl">${esc(c.slug)}</div></td><td>${esc(c.version)}</td><td>${esc(String(c.edition).toUpperCase())}</td><td>${fmtExp(c.expired)}</td><td>${badge(c.status)}</td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty">${all.length?"Tidak ada perusahaan yang cocok.":"Belum ada daftar perusahaan."}</td></tr>`;
+  const coarse=window.matchMedia&&matchMedia("(pointer:coarse)").matches;
+  $("coBody").querySelectorAll("tr.r").forEach(el=>{
+    el.onclick=()=>{ coSel=+el.dataset.i; if(coarse) return pickDb(all[coSel].slug); $("coBody").querySelectorAll("tr.r").forEach(x=>x.classList.toggle("sel",+x.dataset.i===coSel)); };
+    el.ondblclick=()=>pickDb(all[+el.dataset.i].slug); });
+}
+async function reloadCompanies(){
+  coMsg("Memuat ulang daftar perusahaan…"); $("coBody").innerHTML='<tr><td colspan="5" class="empty">Mengambil daftar perusahaan…</td></tr>';
+  try{ const r=await api("/api/companies",{server:S.server}); setCompanies(r.companies,S.user);
+    coMsg(r.companies.length?"":"Daftar perusahaan tidak tersedia"+(r.note?" ("+r.note+")":"")+". Isi alamat database manual di bawah.", r.companies.length?"":"bad"); }
+  catch(err){ renderCo(); coMsg(err.message,"bad"); }
+}
+function backToCompanies(){
+  S.slug=""; S.lic={ok:false}; S.customers=[]; S.sel.clear(); $("cust").value=ALL; clearView();
+  chip($("conn"),"Pilih perusahaan","busy"); chip($("lic"),"Belum ada database","idle"); coMsg("");
+  status("Pilih perusahaan untuk mulai"); steps(); $("coQ").focus();
 }
 function logout(expired){
-  S.token=S.slug=S.email=""; S.lic={ok:false}; S.customers=[]; S.sel.clear();
+  S.token=S.slug=S.email=""; S.lic={ok:false}; S.customers=[]; S.companies=[]; S.sel.clear(); coMsg("");
   chip($("conn"),"Belum login","idle"); chip($("lic"),"Belum ada database","idle"); $("cust").value=ALL; clearView();
-  status(expired?"Sesi berakhir. Silakan login ulang.":"Login dan pilih database untuk mulai", expired?"bad":"");
+  status(expired?"Sesi berakhir. Silakan login ulang.":"Login dan pilih perusahaan untuk mulai", expired?"bad":"");
   loginMsg(expired?"Sesi berakhir. Silakan login ulang.":"", expired?"bad":""); steps();
 }
-async function pickDb(){
-  let slug=$("db").value;
-  if(slug==="__manual"){ slug=(prompt("Slug database (mis. namapt.zahironline.com)")||"").trim().toLowerCase();
-    if(!slug){ $("db").value=S.slug||""; return; } $("db").add(new Option(slug,slug),$("db").options.length-1); $("db").value=slug; }
+async function pickDb(slug){
+  slug=String(slug||"").trim().toLowerCase().replace(/^https?:\/\//,"").replace(/\/+$/,"");
   if(!slug) return;
-  S.slug=slug; S.lic={ok:false}; S.sel.clear(); $("cust").value=ALL; clearView(); steps();
-  chip($("conn"),"Menghubungkan…","busy"); chip($("lic"),"Memeriksa…","busy"); status(`Menghubungkan ke ${slug}…`);
+  coMsg(`Membuka ${slug}…`); chip($("conn"),"Menghubungkan…","busy"); status(`Menghubungkan ke ${slug}…`);
   try{
     const r=await api("/api/connect",{server:S.server,slug,license:(store.get("licenses",{}))[slug]||""});
+    S.slug=slug; S.lic={ok:false}; S.sel.clear(); $("cust").value=ALL; clearView(); coMsg("");
     chip($("conn"),"Terhubung","ok"); setLic(r.license);
     status(`Terhubung: ${slug}` + (r.license.ok?"":" (belum teregistrasi)"), r.license.ok?"ok":"bad");
     if(!r.license.ok && !(store.get("licenses",{}))[slug]) openReg();
     api("/api/customers",{server:S.server,slug}).then(c=>{ if(S.slug===slug) S.customers=c.customers; }).catch(()=>{});
-  }catch(err){ S.slug=""; chip($("conn"),"Gagal terhubung","bad"); chip($("lic"),"–","idle"); status(err.message,"bad"); }
+  }catch(err){ chip($("conn"),"Pilih perusahaan","busy"); coMsg(err.message,"bad"); status(err.message,"bad"); }
   steps();
 }
 function setLic(l){ S.lic=l; const soon=l.expiry && (new Date(l.expiry)-new Date())/864e5<=14;
@@ -583,7 +664,12 @@ async function loadRef(file){
   for(const s of new Set([S.cfg.default_server, ...store.get("servers",[])])) $("servers").append(new Option(s));
   $("npwp").value=store.get("npwp",""); $("kodeA").value=store.get("kode_a","000000"); $("kodeB").value=store.get("kode_b","000000");
   fillSelect($("trx"), refs().trx, store.get("kode_trx","04"), false); trxChanged(); setMonth(0);
-  $("loginBox").addEventListener("submit", doLogin); $("btnSaveServer").onclick=saveServer; $("btnLogout").onclick=()=>logout(false); $("db").onchange=pickDb;
+  $("loginBox").addEventListener("submit", doLogin); $("btnSaveServer").onclick=saveServer; $("btnLogout").onclick=()=>logout(false); $("coLogout").onclick=()=>logout(false); $("btnCo").onclick=backToCompanies;
+  $("coReload").onclick=reloadCompanies; $("coQ").oninput=()=>{ coSel=-1; renderCo(); };
+  $("coQ").addEventListener("keydown",e=>{ const vis=[...$("coBody").querySelectorAll("tr.r")]; if(!vis.length) return; let idx=vis.findIndex(x=>+x.dataset.i===coSel);
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){ e.preventDefault(); idx=e.key==="ArrowDown"?Math.min(vis.length-1,idx+1):Math.max(0,idx-1); vis[idx].click(); vis[idx].scrollIntoView({block:"nearest"}); }
+    if(e.key==="Enter"){ e.preventDefault(); if(idx<0&&vis.length===1) idx=0; if(idx>=0) pickDb(S.companies[+vis[idx].dataset.i].slug); } });
+  $("btnManualDb").onclick=()=>pickDb($("manualDb").value); $("manualDb").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); pickDb($("manualDb").value); } });
   $("btnReg").onclick=openReg; $("regSave").onclick=saveReg;
   $("regCopy").onclick=()=>navigator.clipboard.writeText(S.slug).then(()=>{ $("regMsg").className="msg ok"; $("regMsg").textContent="Slug disalin."; });
   $("btnCust").onclick=openCust; $("cust").onclick=openCust; $("custQ").oninput=renderCust;

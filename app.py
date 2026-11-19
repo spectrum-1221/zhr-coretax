@@ -9,6 +9,7 @@ import ipaddress
 import os
 import re
 
+import requests
 from flask import Flask, jsonify, request, send_file, send_from_directory, redirect, abort
 from werkzeug.exceptions import HTTPException
 
@@ -119,6 +120,100 @@ def clean(rows):
     return out
 
 
+
+# ------------------------------------------------------------------ daftar perusahaan (halaman "Pilih Perusahaan")
+def _pick(o, keys, depth=0, seen=None):
+    """Nilai skalar pertama untuk salah satu `keys`, dicari sampai kedalaman 4 (sama dengan zahir-report)."""
+    seen = set() if seen is None else seen
+    if not isinstance(o, (dict, list)) or depth > 4 or id(o) in seen: return None
+    seen.add(id(o))
+    if isinstance(o, dict):
+        for k in keys:
+            v = o.get(k)
+            if v is not None and not isinstance(v, (dict, list)): return v
+        vals = list(o.values())
+    else:
+        vals = o
+    for v in vals:
+        r = _pick(v, keys, depth + 1, seen)
+        if r is not None: return r
+    return None
+
+
+def _norm_status(v):
+    k = re.sub(r"[^a-z]", "", str(v if v is not None else "").lower())
+    if not k: return ""
+    if re.search(r"inactive|notactive|nonactive|nonaktif|tidakaktif|disabled|suspend|deactiv", k): return "INACTIVE"
+    if "postsubscri" in k: return "Post Subscribe"
+    if "subscri" in k or "active" in k: return "Active"
+    if "trial" in k: return "Trial"
+    if "expire" in k: return "Expired"
+    if "await" in k or "payment" in k: return "Awaiting Payment"
+    return str(v)
+
+
+def _company_row(c, host):
+    co = c.get("company") if isinstance(c.get("company"), dict) else {}
+    mem = c.get("membership") if isinstance(c.get("membership"), dict) else (co.get("membership") if isinstance(co.get("membership"), dict) else {})
+    slugs = core._find_slugs(c, host) or [x for x in [core._find_key(c, "slug")] if x]
+    if not slugs: return None
+    status = _norm_status(mem.get("status") if mem.get("status") is not None else _pick(c, ["membership_status", "status"]))
+    keys = ["expired_at", "expired_date", "expiry_date", "expire_at", "expired", "end_date"]
+    exp = _pick(mem, keys)
+    if exp is None: exp = _pick(c, keys)
+    exp = "" if exp is None else str(exp)
+    try:                                                    # tanggal berakhir sudah lewat -> Expired
+        if exp and status != "INACTIVE" and dt.date.fromisoformat(exp[:10]) < dt.date.today(): status = "Expired"
+    except ValueError:
+        pass
+    def txt(keys): v = _pick(c, keys); return "" if v is None else str(v)
+    return {"name": str(co.get("name") or c.get("name") or c.get("company_name") or c.get("title") or slugs[0]),
+            "slug": slugs[0], "version": txt(["version", "product_version", "app_version", "api_version"]),
+            "edition": txt(["edition", "product_type", "product", "package", "variant_name"]),
+            "expired": exp, "status": status}
+
+
+def companies_full(tok, proto, host, clients, me=None):
+    """Perusahaan milik user + versi/edisi/kedaluarsa/status. Mencoba tiap client sampai ada hasil;
+    bila endpoint detail tidak terbaca, jatuh ke daftar nama+slug biasa. -> (list, catatan)"""
+    root, notes = f"{proto}://{host}", []
+    for client in clients:
+        h = {"Authorization": f"Bearer {tok}", "client": client, "Accept": "application/json", "Content-Language": "id"}
+        for ep, style in core.COMPANY_ENDPOINTS:
+            out, seen = [], set()
+            try:
+                for page in range(1, 51):
+                    r = requests.get(root + ep, headers=h, timeout=60, params=core._company_params(style, page))
+                    if r.status_code >= 400: raise RuntimeError(f"HTTP {r.status_code}")
+                    data = r.json()
+                    items = core.rows_from(data) or (data if isinstance(data, list) else [data])
+                    n = len(out)
+                    for it in items:
+                        row = _company_row(it, host) if isinstance(it, dict) else None
+                        if row and row["slug"] not in seen: seen.add(row["slug"]); out.append(row)
+                    if len(items) < 20 or len(out) == n: break
+            except (RuntimeError, ValueError, requests.RequestException) as ex:
+                notes.append(f"{ep}: {core._short(ex)}")
+            out = [c for c in out if c["status"] != "INACTIVE"]
+            if out:
+                out.sort(key=lambda c: c["name"].casefold())
+                return out, ""
+    dbs, note = core.list_companies({"token": tok, "protocol": proto, "server": host}, me)
+    rows = [{"name": n, "slug": s, "version": "", "edition": "", "expired": "", "status": ""} for n, s in dbs]
+    return rows, ("" if rows else note or "; ".join(notes[:3]))
+
+
+def client_list(host):
+    own = CLIENTS.get(host.split(":")[0].lower())           # client khusus host dari env: dipakai apa adanya
+    return [own] if own else list(dict.fromkeys([GO_CLIENT_B64, core.CLIENT_B64]))
+
+
+def user_of(me):
+    first, last = core._find_key(me, "first_name") or "", core._find_key(me, "last_name") or ""
+    name = f"{first} {last}".strip() or core._find_key(me, "username") or ""
+    return {"name": name, "email": core._find_key(me, "email") or ""}
+
+
 # ------------------------------------------------------------------ halaman
 @app.get("/")
 def home():
@@ -150,16 +245,15 @@ def login():
     if not email or not pw: raise ApiError("Email dan password wajib diisi.")
     proto, host = server_of(b.get("server"))
     base = f"{proto}://{host}"
-    own = CLIENTS.get(host.split(":")[0].lower())        # client khusus host dari env: dipakai apa adanya
-    tries = [own] if own else list(dict.fromkeys([GO_CLIENT_B64, core.CLIENT_B64]))
-    tok = me = None
+    tries = client_list(host)
+    tok = me = used = None
     for i, client in enumerate(tries):
         try:
             tok, me = core.login(email, pw, base, client)
+            used = client
             break
         except RuntimeError as ex:
-            t = str(ex)
-            m = re.search(r"HTTP (\d+)", t)
+            m = re.search(r"HTTP (\d+)", str(ex))
             code = int(m.group(1)) if m else 502
             print(f"[login] host={host} http={code} client_id={_client_id(client)} percobaan={i + 1}/{len(tries)}", flush=True)
             if code == 401 and i < len(tries) - 1:
@@ -170,8 +264,20 @@ def login():
             if code == 403:
                 raise ApiError("Akun ini tidak diizinkan masuk ke server tersebut.", 403)
             raise ApiError(f"Login gagal (HTTP {code}). Coba lagi atau periksa alamat server.", 502)
-    dbs, note = core.list_companies({"token": tok, "protocol": proto, "server": host}, me)
-    return jsonify(token=tok, server=host, databases=[{"name": n, "slug": s} for n, s in dbs], note=note)
+    tries = [used] + [x for x in tries if x != used]      # client yang berhasil dicoba lebih dulu
+    cos, note = companies_full(tok, proto, host, tries, me)
+    return jsonify(token=tok, server=host, user=user_of(me), companies=cos, note=note)
+
+
+@app.post("/api/companies")
+def companies():
+    b = body()
+    auth = request.headers.get("Authorization", "")
+    tok = auth[7:].strip() if auth.lower().startswith("bearer ") else ""
+    if not tok: raise ApiError("Sesi berakhir. Silakan login ulang.", 401)
+    proto, host = server_of(b.get("server"))
+    cos, note = companies_full(tok, proto, host, client_list(host))
+    return jsonify(companies=cos, note=note)
 
 
 @app.post("/api/connect")

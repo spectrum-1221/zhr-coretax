@@ -24,10 +24,12 @@ ALLOWED = [s.strip().lower().lstrip(".") for s in
            os.environ.get("ALLOWED_SERVERS", "zahironline.com,zahirerp.com").split(",") if s.strip()]
 if os.environ.get("FIREBASE_API_KEY"):
     core.FIREBASE_API_KEY = os.environ["FIREBASE_API_KEY"]
+core.CLIENT_B64 = (core.CLIENT_B64 or "").strip()
+CLIENT_FROM_ENV = bool((os.environ.get("ZAHIR_CLIENT_B64") or "").strip())
 CLIENTS = {}                                                  # client khusus per host: env ZAHIR_CLIENT_<HOST>
 for k, v in os.environ.items():
     if k.startswith("ZAHIR_CLIENT_") and k != "ZAHIR_CLIENT_B64":
-        CLIENTS[k[len("ZAHIR_CLIENT_"):].lower().replace("_", ".")] = v
+        CLIENTS[k[len("ZAHIR_CLIENT_"):].lower().replace("_", ".")] = v.strip()
 
 
 class ApiError(Exception):
@@ -47,6 +49,13 @@ def _any_error(ex):
     msg = core.friendly(f"{type(ex).__name__}: {ex}")
     code = 401 if "HTTP 401" in msg else 403 if "HTTP 403" in msg else 502
     return jsonify(error=msg), code
+
+
+def _client_id(b64):
+    """client_id (bagian sebelum ':') dari header client; secret tidak pernah ditampilkan."""
+    import base64
+    try: return base64.b64decode(b64).decode().split(":")[0]
+    except Exception: return "(tidak valid)"
 
 
 def server_of(raw):
@@ -145,6 +154,7 @@ def login():
         t = str(ex)
         m = re.search(r"HTTP (\d+)", t)
         code = int(m.group(1)) if m else 502
+        print(f"[login] host={host} http={code} client_id={_client_id(client)} sumber={'env' if client is core.CLIENT_B64 and CLIENT_FROM_ENV else 'bawaan/host'}", flush=True)
         if code in (400, 401):
             raise ApiError("Email atau password salah. Periksa kembali akun Zahir Anda.", 401)
         if code == 403:
@@ -222,7 +232,9 @@ def refs_parse():
 
 @app.get("/api/health")
 def health():
-    return jsonify(ok=True, time=dt.datetime.utcnow().isoformat() + "Z")
+    return jsonify(ok=True, time=dt.datetime.utcnow().isoformat() + "Z",
+                   client_id=_client_id(core.CLIENT_B64), client_dari_env=CLIENT_FROM_ENV,
+                   client_per_host=sorted(CLIENTS))
 
 
 if __name__ == "__main__":
